@@ -119,24 +119,39 @@ module GitTemplate
         # Step 2: Validate .git_template contents
         puts "\n2️⃣ Validating .git_template contents..."
         log.puts "\n2️⃣ Validating .git_template contents..."
-        required_paths = [
-          "lib/git_template.rb",
-          "template",
-          templated_app_path
-        ]
         
-        required_paths.each do |path|
-          full_path = File.join(git_template_root, path)
-          unless File.exist?(full_path)
-            error_msg = "❌ Error: Required path missing: #{path}"
-            puts error_msg
-            log.puts error_msg
-            exit 1
-          end
-          success_msg = "✅ Found: #{path}"
-          puts success_msg
-          log.puts success_msg
+        # Check for git-template library
+        lib_path = File.join(git_template_root, "lib/git_template.rb")
+        unless File.exist?(lib_path)
+          error_msg = "❌ Error: Required path missing: lib/git_template.rb"
+          puts error_msg
+          log.puts error_msg
+          exit 1
         end
+        puts "✅ Found: lib/git_template.rb"
+        log.puts "✅ Found: lib/git_template.rb"
+        
+        # Check for the templated app path
+        app_path = File.join(git_template_root, templated_app_path)
+        unless File.exist?(app_path)
+          error_msg = "❌ Error: Required path missing: #{templated_app_path}"
+          puts error_msg
+          log.puts error_msg
+          exit 1
+        end
+        puts "✅ Found: #{templated_app_path}"
+        log.puts "✅ Found: #{templated_app_path}"
+        
+        # Check for template file in the app
+        template_file = File.join(app_path, ".git_template/template.rb")
+        unless File.exist?(template_file)
+          error_msg = "❌ Error: Required template file missing: #{templated_app_path}/.git_template/template.rb"
+          puts error_msg
+          log.puts error_msg
+          exit 1
+        end
+        puts "✅ Found: #{templated_app_path}/.git_template/template.rb"
+        log.puts "✅ Found: #{templated_app_path}/.git_template/template.rb"
       
         # Step 3: Create folder template_test
         puts "\n3️⃣ Creating template_test folder..."
