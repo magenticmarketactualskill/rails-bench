@@ -11,7 +11,14 @@ def source_paths
 end
 
 # Load the TemplateLifecycle system
-require_relative 'lib/template_lifecycle'
+# Check if we're running from within the gem or standalone
+if defined?(GitTemplate)
+  # Running from gem - use gem's TemplateLifecycle
+  require 'git_template'
+else
+  # Running standalone - use local files
+  require_relative 'lib/template_lifecycle'
+end
 
 # Initialize and execute the TemplateLifecycle
 lifecycle = TemplateLifecycle.new(self)
