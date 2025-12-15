@@ -144,5 +144,5 @@
   - Ensure all requirements are met and functionality preserved
   - _Requirements: 1.1, 1.2, 2.2_
 
-- [-] 11. Checkpoint - Ensure all tests pass
+- [x] 11. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
