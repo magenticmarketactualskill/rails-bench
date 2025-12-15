@@ -3,3 +3,6 @@ vendor/
 
 # Log directory - contains test execution logs
 log/
+
+# Template test directory - temporary test files
+template_test/

@@ -263,7 +263,7 @@ module GitTemplate
           log.puts template_msg
           
           # Run the template (assuming it's a Rails app)
-          result = false
+          template_result = false
           if File.exist?("bin/rails")
             # Set environment variables to make template non-interactive
             env_vars = {
@@ -286,14 +286,16 @@ module GitTemplate
             puts ""
             log.puts ""
             
-            result = system(env_vars, "bin/rails app:template LOCATION=#{template_path}")
-            result_msg = "Template execution result: #{result}"
+            # Use non-interactive template execution
+            template_result = execute_template_non_interactive(template_path, env_vars, log)
+            result_msg = "Template execution result: #{template_result}"
             puts result_msg
             log.puts result_msg
           else
             warning_msg = "⚠️  Warning: Not a Rails app, skipping template application"
             puts warning_msg
             log.puts warning_msg
+            template_result = true  # Consider it successful if no Rails app to process
           end
           
           # Capture git status and diff to separate log files
@@ -328,7 +330,7 @@ module GitTemplate
             Results:
             • #{modified_files} files modified
             • #{new_files} new files created
-            • Template execution: #{result ? 'SUCCESS' : 'PARTIAL (with errors)'}
+            • Template execution: #{template_result ? 'SUCCESS' : 'PARTIAL (with errors)'}
             
             Log Files:
             • Main execution log: #{main_log}
@@ -342,7 +344,7 @@ module GitTemplate
           puts "\n📊 Summary:"
           puts "  • #{modified_files} files modified"
           puts "  • #{new_files} new files created"
-          puts "  • Template execution: #{result ? 'SUCCESS' : 'PARTIAL (with errors)'}"
+          puts "  • Template execution: #{template_result ? 'SUCCESS' : 'PARTIAL (with errors)'}"
           puts ""
           puts "📁 Test results available in: #{dest_path}"
           puts "📋 Logs saved to: #{log_dir}"
@@ -354,7 +356,7 @@ module GitTemplate
           log.puts "\n📊 Summary:"
           log.puts "  • #{modified_files} files modified"
           log.puts "  • #{new_files} new files created"
-          log.puts "  • Template execution: #{result ? 'SUCCESS' : 'PARTIAL (with errors)'}"
+          log.puts "  • Template execution: #{template_result ? 'SUCCESS' : 'PARTIAL (with errors)'}"
           log.puts "📁 Test results available in: #{dest_path}"
           log.puts "📋 Logs saved to: #{log_dir}"
         end
@@ -377,6 +379,90 @@ module GitTemplate
 
     def self.exit_on_failure?
       true
+    end
+
+    private
+
+    def execute_template_non_interactive(template_path, env_vars, log)
+      require "open3"
+      require "pty"
+      
+      # Define automatic responses for common prompts
+      auto_responses = {
+        # File overwrite prompts
+        /Overwrite.*\? \(enter "h" for help\) \[Ynaqdhm\]/ => "y\n",
+        /conflict.*Overwrite.*\[Ynaqdhm\]/ => "y\n",
+        
+        # Simple template prompts
+        /Add authentication with Devise\? \(y\/n\)/ => "n\n",
+        /Add Bootstrap for styling\? \(y\/n\)/ => "n\n", 
+        /Setup RSpec for testing\? \(y\/n\)/ => "n\n",
+        /Initialize git repository\? \(y\/n\)/ => "n\n",
+        /Load seed data\? \(y\/n\)/ => "n\n",
+        
+        # Rails8-juris template prompts
+        /Use Redis\? \(no = use redis-emulator\)/ => "no\n",
+        /Include ActiveDataFlow integration\?/ => "no\n",
+        /Setup Docker\/Kamal deployment\?/ => "no\n",
+        /Generate sample Product models\?/ => "no\n",
+        /Setup admin interface\?/ => "no\n",
+        
+        # Generic yes/no prompts (default to no for safety)
+        /\? \(y\/n\)/ => "n\n",
+        /\? \(yes\/no\)/ => "no\n"
+      }
+      
+      command = "bin/rails app:template LOCATION=#{template_path}"
+      
+      begin
+        # Use PTY to handle interactive prompts
+        PTY.spawn(env_vars, command) do |stdout, stdin, pid|
+          output_buffer = ""
+          
+          loop do
+            begin
+              # Read available output
+              ready = IO.select([stdout], nil, nil, 1)
+              if ready
+                partial_output = stdout.read_nonblock(1024)
+                output_buffer += partial_output
+                print partial_output  # Show output in real-time
+                
+                # Check for prompts and respond automatically
+                auto_responses.each do |pattern, response|
+                  if output_buffer.match(pattern)
+                    puts "\n🤖 Auto-responding: #{response.strip}"
+                    log.puts "🤖 Auto-responding to prompt: #{pattern.source} -> #{response.strip}"
+                    stdin.write(response)
+                    stdin.flush
+                    output_buffer = ""  # Clear buffer after responding
+                    break
+                  end
+                end
+              end
+            rescue EOFError
+              break
+            rescue IO::WaitReadable
+              # Continue if no data available
+            end
+          end
+          
+          # Wait for process to complete
+          Process.wait(pid)
+          success = $?.success?
+          puts "\n🎯 Template execution completed with status: #{success}"
+          log.puts "🎯 Template execution completed with status: #{success}"
+          success
+        end
+      rescue PTY::ChildExited => e
+        puts "Template process exited: #{e.status}"
+        log.puts "Template process exited: #{e.status}"
+        e.status.success?
+      rescue => e
+        puts "Error executing template: #{e.message}"
+        log.puts "Error executing template: #{e.message}"
+        false
+      end
     end
 
     # Default action when no command is specified
