@@ -1,5 +1,5 @@
 module GitTemplate
-  VERSION = "0.0.1"
+  VERSION = "0.1.0"
   
   # Validate semantic versioning format
   def self.valid_version?(version_string)
