@@ -1,7 +1,9 @@
 module GitTemplate
   module TemplateGenerators
-    module GemBundleGenerator
+    class GemBundleGenerator
       def self.execute
+        raise "Must override"
+=begin
         say "#~ 030_PHASE_GemBundle_Development_Test"
         say "Adding development and test gems..."
         
@@ -19,6 +21,7 @@ module GitTemplate
           gem 'better_errors'
           gem 'binding_of_caller'
         end
+=end
       end
     end
   end
