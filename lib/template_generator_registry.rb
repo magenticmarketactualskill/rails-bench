@@ -4,6 +4,7 @@
 # maps generators to template phases, validates generator structure,
 # and provides generator metadata and execution capabilities.
 
+require_relative 'git_template/template_generators/base_generator'
 require_relative 'git_template/template_generators/gem_bundle_generator'
 require_relative 'git_template/template_generators/view_generator'
 require_relative 'git_template/template_generators/test_generator'

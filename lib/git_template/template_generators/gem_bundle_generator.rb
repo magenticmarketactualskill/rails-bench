@@ -1,6 +1,8 @@
+require_relative 'base_generator'
+
 module GitTemplate
   module TemplateGenerators
-    class GemBundleGenerator
+    class GemBundleGenerator < BaseGenerator
       def self.execute
         raise "Must override - implement data_module method"
       end
@@ -27,9 +29,7 @@ module GitTemplate
 
       private
 
-      def self.data_module
-        raise "Must override - return the data module"
-      end
+
 
       def self.install_gem_group(groups, gems, message)
         say message if message
