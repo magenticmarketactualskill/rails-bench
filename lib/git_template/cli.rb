@@ -412,6 +412,328 @@ module GitTemplate
       exit 1
     end
 
+    desc "check_target", "Apply template to target app and compare with templated version"
+    option :target, type: :string, required: true, desc: "Path to base Rails app (e.g., examples/rails/rails8-juris)"
+    option :templated, type: :string, required: true, desc: "Path to templated version with .git_template (e.g., examples/rails/rails8-juris-templated)"
+    def check_target
+      require "fileutils"
+      require "time"
+      
+      target_path = options[:target]
+      templated_path = options[:templated]
+      
+      # Create log directory and timestamp
+      timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+      log_dir = File.join(Dir.pwd, "log", "check-target", timestamp)
+      FileUtils.mkdir_p(log_dir)
+      
+      # Create log files
+      main_log = File.join(log_dir, "check_execution.log")
+      diff_log = File.join(log_dir, "differences.log")
+      summary_log = File.join(log_dir, "summary.log")
+      
+      puts "🔍 Starting target comparison..."
+      puts "Target template: #{target_path}"
+      puts "Templated version: #{templated_path}"
+      puts "📁 Logs will be saved to: #{log_dir}"
+      
+      # Start logging
+      File.open(main_log, 'w') do |log|
+        log.puts "Git Template Target Comparison Log"
+        log.puts "=" * 50
+        log.puts "Timestamp: #{Time.now}"
+        log.puts "Target template: #{target_path}"
+        log.puts "Templated version: #{templated_path}"
+        log.puts "Log directory: #{log_dir}"
+        log.puts "=" * 50
+        log.puts ""
+        
+        begin
+          # Step 1: Validate paths exist
+          puts "\n1️⃣ Validating paths..."
+          log.puts "1️⃣ Validating paths..."
+          
+          git_template_root = File.expand_path(Dir.pwd)
+          target_full_path = File.join(git_template_root, target_path)
+          templated_full_path = File.join(git_template_root, templated_path)
+          
+          unless File.directory?(target_full_path)
+            error_msg = "❌ Target path does not exist: #{target_full_path}"
+            puts error_msg
+            log.puts error_msg
+            exit 1
+          end
+          
+          unless File.directory?(templated_full_path)
+            error_msg = "❌ Templated path does not exist: #{templated_full_path}"
+            puts error_msg
+            log.puts error_msg
+            exit 1
+          end
+          
+          templated_template_file = File.join(templated_full_path, ".git_template", "template.rb")
+          unless File.exist?(templated_template_file)
+            error_msg = "❌ Templated version template file not found: #{templated_template_file}"
+            puts error_msg
+            log.puts error_msg
+            exit 1
+          end
+          
+          success_msg = "✅ All paths validated successfully"
+          puts success_msg
+          log.puts success_msg
+          
+          # Step 2: Apply template to target and compare with templated version
+          puts "\n2️⃣ Creating temporary test environment..."
+          log.puts "2️⃣ Creating temporary test environment..."
+          
+          # Create temporary directory for testing
+          test_dir = File.join(Dir.pwd, "template_test_comparison")
+          FileUtils.rm_rf(test_dir) if File.exist?(test_dir)
+          FileUtils.mkdir_p(test_dir)
+          
+          # Copy target to test directory and add template from templated version
+          target_test_path = File.join(test_dir, "target_applied")
+          FileUtils.cp_r(target_full_path, target_test_path)
+          
+          # Copy the .git_template directory from templated version to target copy
+          templated_git_template = File.join(templated_full_path, ".git_template")
+          target_git_template = File.join(target_test_path, ".git_template")
+          FileUtils.cp_r(templated_git_template, target_git_template)
+          
+          # Clean up problematic files for testing
+          cleanup_msg = "🧹 Cleaning up files for testing..."
+          puts cleanup_msg
+          log.puts cleanup_msg
+          
+          # Clean up Gemfile
+          gemfile_path = File.join(target_test_path, "Gemfile")
+          if File.exist?(gemfile_path)
+            gemfile_content = File.read(gemfile_path)
+            
+            # Remove problematic gem references (path-based gems that won't exist)
+            problematic_patterns = [
+              /^gem\s+["']active_data_flow["'].*$/,
+              /^gem\s+["']active_data_flow-.*$/,
+              /^gem\s+["']redis-emulator["'].*$/,
+              /^gem\s+["']submoduler-core.*$/,
+              /^#gem\s+["']submoduler-core.*$/,
+              /path:\s*["'][^"']*active_data_flow[^"']*["']/,
+              /path:\s*["'][^"']*redis-emulator[^"']*["']/,
+              /path:\s*["'][^"']*submoduler[^"']*["']/
+            ]
+            
+            problematic_patterns.each do |pattern|
+              gemfile_content.gsub!(pattern) { |match| "# #{match} # Commented out for testing" }
+            end
+            
+            File.write(gemfile_path, gemfile_content)
+            cleanup_gemfile_msg = "✅ Cleaned up Gemfile (removed path-based gems)"
+            puts cleanup_gemfile_msg
+            log.puts cleanup_gemfile_msg
+          end
+          
+          # Clean up boot.rb
+          boot_path = File.join(target_test_path, "config", "boot.rb")
+          if File.exist?(boot_path)
+            boot_content = File.read(boot_path)
+            boot_content.gsub!(/^require\s+['"]active_data_flow['"].*$/, "# require 'active_data_flow' # Commented out for testing")
+            File.write(boot_path, boot_content)
+            cleanup_boot_msg = "✅ Cleaned up boot.rb"
+            puts cleanup_boot_msg
+            log.puts cleanup_boot_msg
+          end
+          
+          # Clean up or remove problematic initializers
+          problematic_initializers = [
+            "active_data_flow.rb",
+            "redis_emulator.rb",
+            "submoduler.rb"
+          ]
+          
+          problematic_initializers.each do |initializer|
+            initializer_path = File.join(target_test_path, "config", "initializers", initializer)
+            if File.exist?(initializer_path)
+              File.delete(initializer_path)
+              cleanup_init_msg = "✅ Removed #{initializer} initializer"
+              puts cleanup_init_msg
+              log.puts cleanup_init_msg
+            end
+          end
+          
+          # Clean up application.rb if it has problematic requires
+          app_rb_path = File.join(target_test_path, "config", "application.rb")
+          if File.exist?(app_rb_path)
+            app_content = File.read(app_rb_path)
+            original_content = app_content.dup
+            
+            # Comment out problematic requires
+            app_content.gsub!(/^require\s+['"]active_data_flow['"].*$/, "# require 'active_data_flow' # Commented out for testing")
+            app_content.gsub!(/^require\s+['"]redis-emulator['"].*$/, "# require 'redis-emulator' # Commented out for testing")
+            app_content.gsub!(/^require\s+['"]submoduler.*['"].*$/, "# require 'submoduler' # Commented out for testing")
+            
+            if app_content != original_content
+              File.write(app_rb_path, app_content)
+              cleanup_app_msg = "✅ Cleaned up application.rb"
+              puts cleanup_app_msg
+              log.puts cleanup_app_msg
+            end
+          end
+          
+          test_msg = "✅ Test environment created: #{test_dir}"
+          puts test_msg
+          log.puts test_msg
+          
+          # Step 3: Apply template to target copy
+          puts "\n3️⃣ Applying template to target copy..."
+          log.puts "3️⃣ Applying template to target copy..."
+          
+          # Initialize template_result variable
+          template_result = false
+          
+          Dir.chdir(target_test_path) do
+            # Initialize git repo if not exists
+            unless File.directory?(".git")
+              system("git init", out: File::NULL, err: File::NULL)
+              system("git add .", out: File::NULL, err: File::NULL)
+              system("git commit -m 'Initial commit'", out: File::NULL, err: File::NULL)
+            end
+            
+            # Install npm dependencies first if package.json exists
+            if File.exist?("package.json")
+              npm_msg = "📦 Installing npm dependencies..."
+              puts npm_msg
+              log.puts npm_msg
+              system("npm install")
+            end
+            
+            # Apply the template
+            template_path = File.join(Dir.pwd, ".git_template", "template.rb")
+            
+            if File.exist?("bin/rails")
+              # Set environment variables for non-interactive mode
+              env_vars = {
+                "RAILS_TEMPLATE_NON_INTERACTIVE" => "true",
+                "TEMPLATE_USE_REDIS" => "false",
+                "TEMPLATE_USE_ACTIVE_DATA_FLOW" => "false", 
+                "TEMPLATE_USE_DOCKER" => "false",
+                "TEMPLATE_GENERATE_SAMPLE_MODELS" => "false",
+                "TEMPLATE_SETUP_ADMIN" => "false",
+                "THOR_MERGE" => "true",
+                "THOR_SHELL" => "Basic",
+                "RAILS_ENV" => "development"
+              }
+              
+              # Use non-interactive template execution
+              template_result = execute_template_non_interactive(template_path, env_vars, log)
+              
+              if template_result
+                apply_msg = "✅ Template applied successfully"
+                puts apply_msg
+                log.puts apply_msg
+              else
+                error_msg = "❌ Template application failed"
+                puts error_msg
+                log.puts error_msg
+                exit 1
+              end
+            else
+              warning_msg = "⚠️  Not a Rails app, skipping template application"
+              puts warning_msg
+              log.puts warning_msg
+            end
+          end
+          
+          # Step 4: Compare the applied target with the templated version
+          puts "\n4️⃣ Comparing applied target with templated version..."
+          log.puts "4️⃣ Comparing applied target with templated version..."
+          
+          # Use git diff to compare directories
+          diff_output = `diff -r --exclude='.git' --exclude='log' --exclude='tmp' --exclude='node_modules' --exclude='vendor/bundle' "#{target_test_path}" "#{templated_full_path}" 2>&1`
+          diff_exit_code = $?.exitstatus
+          
+          # Save diff output
+          File.write(diff_log, diff_output)
+          
+          # Analyze results
+          if diff_exit_code == 0
+            success_msg = "✅ SUCCESS: Target and templated versions are identical!"
+            puts success_msg
+            log.puts success_msg
+            test_result = "PASSED"
+          else
+            warning_msg = "⚠️  DIFFERENCES FOUND: Target and templated versions differ"
+            puts warning_msg
+            log.puts warning_msg
+            puts "📄 Differences saved to: #{diff_log}"
+            log.puts "📄 Differences saved to: #{diff_log}"
+            test_result = "FAILED"
+            
+            # Show summary of differences
+            diff_lines = diff_output.lines
+            file_diffs = diff_lines.select { |line| line.start_with?("Only in") || line.start_with?("Files") }.count
+            puts "📊 Found #{file_diffs} file differences"
+            log.puts "📊 Found #{file_diffs} file differences"
+          end
+          
+          # Step 5: Create summary
+          summary_content = <<~SUMMARY
+            Git Template Target Comparison Summary
+            =====================================
+            Timestamp: #{Time.now}
+            Target template: #{target_path}
+            Templated version: #{templated_path}
+            
+            Results:
+            • Test result: #{test_result}
+            • Template application: #{template_result ? 'SUCCESS' : 'FAILED'}
+            • Comparison: #{diff_exit_code == 0 ? 'IDENTICAL' : 'DIFFERENCES FOUND'}
+            
+            Log Files:
+            • Main execution log: #{main_log}
+            • Differences log: #{diff_log}
+            • This summary: #{summary_log}
+            
+            Test Directory: #{test_dir}
+          SUMMARY
+          
+          File.write(summary_log, summary_content)
+          
+          puts "\n📊 Summary:"
+          puts "  • Test result: #{test_result}"
+          puts "  • Template application: #{template_result ? 'SUCCESS' : 'FAILED'}"
+          puts "  • Comparison: #{diff_exit_code == 0 ? 'IDENTICAL' : 'DIFFERENCES FOUND'}"
+          puts ""
+          puts "📁 Test directory: #{test_dir}"
+          puts "📋 Logs saved to: #{log_dir}"
+          puts "  • Main log: #{File.basename(main_log)}"
+          puts "  • Differences: #{File.basename(diff_log)}"
+          puts "  • Summary: #{File.basename(summary_log)}"
+          puts ""
+          
+          if diff_exit_code == 0
+            puts "🎉 Target comparison completed successfully!"
+          else
+            puts "⚠️  Target comparison found differences - review logs for details"
+          end
+          
+        rescue => e
+          error_msg = "❌ Error during target comparison: #{e.message}"
+          puts error_msg
+          log.puts error_msg
+          log.puts "Backtrace:" if ENV["DEBUG"]
+          log.puts e.backtrace.join("\n") if ENV["DEBUG"]
+          puts e.backtrace if ENV["DEBUG"]
+          exit 1
+        end
+      end
+    rescue => e
+      error_msg = "❌ Error during target comparison: #{e.message}"
+      puts error_msg
+      puts e.backtrace if ENV["DEBUG"]
+      exit 1
+    end
+
     def self.exit_on_failure?
       true
     end
