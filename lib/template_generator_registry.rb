@@ -1,16 +1,26 @@
-# ModuleRegistry - Discovers, validates, and manages template modules
+# TemplateGeneratorRegistry - Discovers, validates, and manages template generators
 #
-# This class auto-discovers template modules in the standardized folder structure,
-# maps folder names to template phases automatically, validates module structure
-# and dependencies, and provides module metadata and path resolution.
+# This class auto-discovers Rails generators in the git-template system,
+# maps generators to template phases, validates generator structure,
+# and provides generator metadata and execution capabilities.
 
-class ModuleRegistry
+require_relative 'git_template/template_generators/gem_bundle_generator'
+require_relative 'git_template/template_generators/view_generator'
+require_relative 'git_template/template_generators/test_generator'
+require_relative 'git_template/template_generators/home_feature_generator'
+require_relative 'git_template/template_generators/post_feature_generator'
+require_relative 'git_template/template_generators/completion_generator'
+require_relative 'git_template/template_generators/rails8_simple_generator'
+
+class TemplateGeneratorRegistry
   attr_reader :module_registry, :discovered_modules, :phase_modules
 
   def initialize(module_registry = "module_registry")
     @module_registry = module_registry
     @discovered_modules = {}
     @phase_modules = {}
+    @registered_generators = {}
+    register_default_generators
   end
 
   def discover_modules
@@ -113,8 +123,74 @@ class ModuleRegistry
   def total_module_count
     @discovered_modules.length
   end
+  
+  # Register a Rails generator
+  def register_generator(name, generator_class, phase = nil)
+    @registered_generators[name] = {
+      class: generator_class,
+      phase: phase || infer_phase_from_generator_name(name)
+    }
+  end
+  
+  # Get registered generator
+  def get_generator(name)
+    @registered_generators[name]
+  end
+  
+  # Get all generators for a phase
+  def get_generators_for_phase(phase_name)
+    @registered_generators.select { |name, info| info[:phase] == phase_name }
+  end
+  
+  # Execute a generator
+  def execute_generator(name, *args)
+    generator_info = @registered_generators[name]
+    return false unless generator_info
+    
+    generator_module = generator_info[:class]
+    
+    # Execute the module's execute method
+    generator_module.execute(*args)
+    
+    true
+  rescue => e
+    puts "Error executing generator #{name}: #{e.message}"
+    false
+  end
+  
+  # Get all registered generators
+  def all_generators
+    @registered_generators
+  end
 
   private
+  
+  def register_default_generators
+    register_generator(:gem_bundle, GitTemplate::TemplateGenerators::GemBundleGenerator, '030_PHASE')
+    register_generator(:view, GitTemplate::TemplateGenerators::ViewGenerator, '040_PHASE')
+    register_generator(:test, GitTemplate::TemplateGenerators::TestGenerator, '050_PHASE')
+    register_generator(:home_feature, GitTemplate::TemplateGenerators::HomeFeatureGenerator, '100_PHASE')
+    register_generator(:post_feature, GitTemplate::TemplateGenerators::PostFeatureGenerator, '100_PHASE')
+    register_generator(:completion, GitTemplate::TemplateGenerators::CompletionGenerator, '900_PHASE')
+    register_generator(:rails8_simple, GitTemplate::TemplateGenerators::Rails8SimpleGenerator, 'FULL_TEMPLATE')
+  end
+  
+  def infer_phase_from_generator_name(name)
+    case name.to_s
+    when /gem|bundle/
+      '030_PHASE'
+    when /view|styling|markup/
+      '040_PHASE'
+    when /test|rspec/
+      '050_PHASE'
+    when /feature|model|controller/
+      '100_PHASE'
+    when /completion|complete/
+      '900_PHASE'
+    else
+      'unknown'
+    end
+  end
 
   def scan_legacy_structure
     # Fallback: scan current directory for .rb files (excluding template.rb)
