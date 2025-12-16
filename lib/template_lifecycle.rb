@@ -6,7 +6,7 @@
 
 require_relative 'configuration_manager'
 require_relative 'phase'
-require_relative 'module_registry'
+require_relative 'template_generator_registry'
 require_relative 'template_lifecycle_errors'
 
 class TemplateLifecycle
@@ -18,7 +18,7 @@ class TemplateLifecycle
     @template_context = template_context
     @template_root = template_root
     @configuration_manager = ConfigurationManager.new(template_context)
-    @module_registry = ModuleRegistry.new(template_root)
+    @module_registry = TemplateGeneratorRegistry.new(template_root)
     @phases = []
     @execution_summary = {
       applied_modules: [],

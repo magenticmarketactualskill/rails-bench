@@ -5,7 +5,7 @@ require_relative "git_template/gem_template_runner"
 # Load existing TemplateLifecycle system
 require_relative "template_lifecycle"
 require_relative "configuration_manager"
-require_relative "module_registry"
+require_relative "template_generator_registry"
 require_relative "phase"
 require_relative "template_lifecycle_errors"
 
