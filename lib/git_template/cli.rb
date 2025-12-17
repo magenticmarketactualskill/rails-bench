@@ -6,7 +6,7 @@ require "fileutils"
 #require_relative "commands/update_command"
 #require_relative "commands/push_command"
 #require_relative "commands/push_command"
-require_relative "commands/diff_result_command_concern"
+require_relative "command_concerns/diff_result_command_concern"
 
 module GitTemplate
   class CLI < Thor

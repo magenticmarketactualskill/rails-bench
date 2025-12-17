@@ -10,7 +10,6 @@ require_relative '../models/templater_folder'
 module GitTemplate
   module Commands
     class DiffResultCommand
-      extend ActiveSupport::Concern
       def execute(folder_path, options = {})
         execute_with_error_handling("diff_result", options) do
           log_command_execution("diff_result", [folder_path], options)

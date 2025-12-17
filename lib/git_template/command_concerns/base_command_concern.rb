@@ -8,7 +8,6 @@ require_relative '../status_command_errors'
 module GitTemplate
   module Commands
     class BaseCommand
-      extend ActiveSupport::Concern
       include StatusCommandErrors
 
       def initialize
