@@ -11,7 +11,6 @@ require_relative 'git_template/template_generators/test_generator'
 require_relative 'git_template/template_generators/home_feature_generator'
 require_relative 'git_template/template_generators/post_feature_generator'
 require_relative 'git_template/template_generators/completion_generator'
-require_relative 'git_template/template_generators/rails8_simple_generator'
 
 class TemplateGeneratorRegistry
   attr_reader :module_registry, :discovered_modules, :phase_modules
@@ -173,7 +172,6 @@ class TemplateGeneratorRegistry
     register_generator(:home_feature, GitTemplate::TemplateGenerators::HomeFeatureGenerator, '100_PHASE')
     register_generator(:post_feature, GitTemplate::TemplateGenerators::PostFeatureGenerator, '100_PHASE')
     register_generator(:completion, GitTemplate::TemplateGenerators::CompletionGenerator, '900_PHASE')
-    register_generator(:rails8_simple, GitTemplate::TemplateGenerators::Rails8SimpleGenerator, 'FULL_TEMPLATE')
   end
   
   def infer_phase_from_generator_name(name)

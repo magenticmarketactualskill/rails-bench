@@ -6,6 +6,7 @@
 
 require_relative '../models/folder_analysis'
 require_relative '../models/template_configuration'
+require_relative '../models/templater_folder'
 require_relative '../status_command_errors'
 
 module GitTemplate
@@ -26,60 +27,25 @@ module GitTemplate
       end
 
       def has_template_configuration?(path)
-        return false unless File.directory?(path)
-        File.directory?(File.join(path, '.git_template'))
+        Models::TemplaterFolder.new(path).has_template_configuration?
       end
 
       def is_git_repository?(path)
-        return false unless File.directory?(path)
-        File.directory?(File.join(path, '.git'))
+        Models::TemplaterFolder.new(path).git_repository?
       end
 
       def find_templated_folder(path)
-        return nil unless File.directory?(path)
-        
-        # Look for folder in top-level templated/ directory structure
-        # We need to work with relative paths for the templated/ structure
-        
-        # Get the current working directory to determine relative path
-        current_dir = Dir.pwd
-        expanded_path = File.expand_path(path)
-        
-        # If expanded_path is absolute and starts with current_dir, make it relative
-        if expanded_path.start_with?(current_dir)
-          relative_path = expanded_path[(current_dir.length + 1)..-1] # +1 to skip the '/'
-        else
-          # If it's already relative or doesn't start with current_dir, use as-is
-          relative_path = path.start_with?('/') ? path[1..-1] : path
-        end
-        
-        templated_path = File.join('templated', relative_path)
-        
-        # Also check legacy -templated suffix patterns for backward compatibility
-        parent_dir = File.dirname(path)
-        folder_name = File.basename(path)
-        
-        templated_patterns = [
-          templated_path,  # New: templated/examples/rails/simple
-          File.join(parent_dir, "#{folder_name}-templated"),  # Legacy: simple-templated
-          File.join(parent_dir, "#{folder_name}-templatd")   # Handle typo in existing examples
-        ]
-        
-        templated_patterns.each do |candidate_path|
-          return candidate_path if File.directory?(candidate_path)
-        end
-        
-        nil
+        Models::TemplaterFolder.new(path).templated_folder_path
       end
 
       def get_template_configuration(path)
-        git_template_path = File.join(path, '.git_template')
-        return nil unless File.directory?(git_template_path)
+        templater_folder = Models::TemplaterFolder.new(path)
+        return nil unless templater_folder.has_template_configuration?
         
         begin
-          Models::TemplateConfiguration.new(git_template_path)
+          Models::TemplateConfiguration.new(templater_folder.template_configuration_path)
         rescue => e
-          raise TemplateValidationError.new(git_template_path, [e.message])
+          raise TemplateValidationError.new(templater_folder.template_configuration_path, [e.message])
         end
       end
 
