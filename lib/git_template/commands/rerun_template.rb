@@ -46,8 +46,30 @@ module GitTemplate
                 return result
               end
               
-              # Update template configuration
-              result = template_processor.update_template_configuration(validated_path, options)
+              # Apply template to regenerate application files
+              template_path = File.join(validated_path, '.git_template')
+              
+              begin
+                apply_result = template_processor.apply_template(template_path, validated_path, options)
+                
+                # Convert to IterateCommandResult format
+                result = Models::Result::IterateCommandResult.new(
+                  success: true,
+                  operation: "rerun_template",
+                  data: {
+                    template_path: apply_result[:template_path],
+                    target_path: apply_result[:target_path],
+                    applied_template: apply_result[:applied_template],
+                    output: apply_result[:output]
+                  }
+                )
+              rescue => e
+                result = Models::Result::IterateCommandResult.new(
+                  success: false,
+                  operation: "rerun_template",
+                  error_message: "Template application failed: #{e.message}"
+                )
+              end
               
               # Output result
               puts result.format_output(options[:format], options)
