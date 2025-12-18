@@ -15,28 +15,41 @@ module GitTemplate
     module RemoveRepo
       def self.included(base)
         base.class_eval do
-          desc "remove-repo [REMOTE_URL]", "Remove submodule and templated folder for the specified repository URL"
+          desc "remove-repo --path PATH|--url URL", "Remove submodule and templated folder by path or URL"
           add_common_options
           option :force, type: :boolean, default: false, desc: "Force removal even if there are unpushed changes"
+          option :path, type: :string, desc: "Submodule path to remove"
+          option :url, type: :string, desc: "Repository URL to find and remove"
           
-          define_method :remove_repo do |remote_url = nil|
+          define_method :remove_repo do
             execute_with_error_handling("remove_repo", options) do
-              log_command_execution("remove_repo", [remote_url], options)
+              log_command_execution("remove_repo", [], options)
               setup_environment(options)
               
-              # Validate remote URL is provided
-              unless remote_url
+              # Validate that either path or url is provided
+              unless options[:path] || options[:url]
                 result = Models::Result::IterateCommandResult.new(
                   success: false,
                   operation: "remove_repo",
-                  error_message: "Remote URL is required for remove-repo command"
+                  error_message: "Either --path or --url parameter is required for remove-repo command"
+                )
+                puts result.format_output(options[:format], options)
+                return result
+              end
+              
+              # Validate that both path and url are not provided
+              if options[:path] && options[:url]
+                result = Models::Result::IterateCommandResult.new(
+                  success: false,
+                  operation: "remove_repo",
+                  error_message: "Cannot specify both --path and --url parameters. Use one or the other."
                 )
                 puts result.format_output(options[:format], options)
                 return result
               end
               
               # Execute repository removal
-              result = perform_remove_repo(remote_url, options)
+              result = perform_remove_repo(options)
               
               # Format and display output
               puts result.format_output(options[:format], options)
@@ -47,16 +60,31 @@ module GitTemplate
           
           private
           
-          define_method :perform_remove_repo do |remote_url, options|
+          define_method :perform_remove_repo do |options|
             begin
-              # Find submodule path for this URL
-              submodule_path = find_submodule_path(remote_url)
-              unless submodule_path
-                return Models::Result::IterateCommandResult.new(
-                  success: false,
-                  operation: "remove_repo",
-                  error_message: "No submodule found with URL #{remote_url}"
-                )
+              # Determine submodule path and URL
+              if options[:path]
+                # Remove by path - validate path exists and get URL
+                submodule_path = options[:path]
+                remote_url = find_submodule_url(submodule_path)
+                unless remote_url
+                  return Models::Result::IterateCommandResult.new(
+                    success: false,
+                    operation: "remove_repo",
+                    error_message: "No submodule found at path #{submodule_path}"
+                  )
+                end
+              else
+                # Remove by URL - find the path for this URL
+                remote_url = options[:url]
+                submodule_path = find_submodule_path(remote_url)
+                unless submodule_path
+                  return Models::Result::IterateCommandResult.new(
+                    success: false,
+                    operation: "remove_repo",
+                    error_message: "No submodule found with URL #{remote_url}"
+                  )
+                end
               end
               
               # Check for unpushed changes unless force is enabled
@@ -128,6 +156,35 @@ module GitTemplate
                 url = $1.strip
                 if url == remote_url && current_path
                   return current_path
+                end
+              end
+            end
+            
+            nil
+          end
+          
+          define_method :find_submodule_url do |submodule_path|
+            # Check if .gitmodules exists
+            return nil unless File.exist?('.gitmodules')
+            
+            gitmodules_content = File.read('.gitmodules')
+            current_submodule = nil
+            current_path = nil
+            current_url = nil
+            
+            gitmodules_content.lines.each do |line|
+              line = line.strip
+              
+              if line.match(/^\[submodule "(.+)"\]$/)
+                current_submodule = $1
+                current_path = nil
+                current_url = nil
+              elsif line.match(/^\s*path\s*=\s*(.+)$/)
+                current_path = $1.strip
+              elsif line.match(/^\s*url\s*=\s*(.+)$/)
+                current_url = $1.strip
+                if current_path == submodule_path && current_url
+                  return current_url
                 end
               end
             end

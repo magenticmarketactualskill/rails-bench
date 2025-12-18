@@ -18,12 +18,14 @@ module GitTemplate
     module Iterate
       def self.included(base)
         base.class_eval do
-          desc "iterate [PATH]", "Handle template iteration with configuration preservation"
+          desc "iterate", "Handle template iteration with configuration preservation"
           add_common_options
           option :detailed_comparison, type: :boolean, default: true, desc: "Generate detailed comparison report"
+          option :path, type: :string, default: ".", desc: "Folder path to iterate (defaults to current directory)"
           
-          define_method :iterate do |path = "."|
+          define_method :iterate do
             execute_with_error_handling("iterate", options) do
+              path = options[:path] || "."
               log_command_execution("iterate", [path], options)
               setup_environment(options)
               

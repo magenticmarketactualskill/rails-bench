@@ -12,7 +12,7 @@ module GitTemplate
     module Clone
       def self.included(base)
         base.class_eval do
-        desc "clone GIT_URL [TARGET_FOLDER]", "Clone a git repository for template development"
+        desc "clone", "Clone a git repository for template development"
         add_common_options
         option :quiet, type: :boolean, desc: "Suppress output during clone"
         option :depth, type: :numeric, desc: "Create a shallow clone with specified depth"
@@ -20,9 +20,13 @@ module GitTemplate
         option :allow_existing, type: :boolean, desc: "Allow cloning into existing directory"
         option :create_template_config, type: :boolean, desc: "Create basic template configuration"
         option :create_readme, type: :boolean, desc: "Create template development README"
+        option :url, type: :string, desc: "Git repository URL to clone", required: true
+        option :target, type: :string, desc: "Target folder for clone (defaults to repository name)"
         
-        define_method :clone do |git_url, target_folder = nil|
+        define_method :clone do
           execute_with_error_handling("clone", options) do
+            git_url = options[:url]
+            target_folder = options[:target]
             log_command_execution("clone", [git_url, target_folder], options)
             
             # Validate and prepare parameters

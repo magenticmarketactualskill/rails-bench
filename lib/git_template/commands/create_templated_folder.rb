@@ -14,12 +14,14 @@ module GitTemplate
     module CreateTemplatedFolder
       def self.included(base)
         base.class_eval do
-          desc "create-templated-folder [PATH]", "Create templated folder structure with template configuration"
+          desc "create-templated-folder", "Create templated folder structure with template configuration"
           add_common_options
           option :template_content, type: :string, desc: "Custom template content"
+          option :path, type: :string, default: ".", desc: "Source folder path (defaults to current directory)"
           
-          define_method :create_templated_folder do |path = "."|
+          define_method :create_templated_folder do
             execute_with_error_handling("create_templated_folder", options) do
+              path = options[:path] || "."
               log_command_execution("create_templated_folder", [path], options)
               setup_environment(options)
               

@@ -13,14 +13,16 @@ module GitTemplate
     module Compare
       def self.included(base)
         base.class_eval do
-        desc "compare [PATH]", "Generate detailed file-by-file diff between source and templated folders"
+        desc "compare", "Generate detailed file-by-file diff between source and templated folders"
         add_common_options
         option :source_folder, type: :string, desc: "Explicit source folder path"
         option :templated_folder, type: :string, desc: "Explicit templated folder path"
         option :output_file, type: :string, desc: "Custom output file path for diff results"
+        option :path, type: :string, default: ".", desc: "Base folder path (defaults to current directory)"
         
-        define_method :compare do |path = "."|
+        define_method :compare do
           execute_with_error_handling("compare", options) do
+            path = options[:path] || "."
             log_command_execution("compare", [path], options)
             setup_environment(options)
             

@@ -14,12 +14,14 @@ module GitTemplate
     module RerunTemplate
       def self.included(base)
         base.class_eval do
-          desc "rerun-template [PATH]", "Rerun template processing and update template configuration"
+          desc "rerun-template", "Rerun template processing and update template configuration"
           add_common_options
           option :update_content, type: :boolean, default: true, desc: "Update template content based on current state"
+          option :path, type: :string, default: ".", desc: "Templated folder path (defaults to current directory)"
           
-          define_method :rerun_template do |path = "."|
+          define_method :rerun_template do
             execute_with_error_handling("rerun_template", options) do
+              path = options[:path] || "."
               log_command_execution("rerun_template", [path], options)
               setup_environment(options)
               

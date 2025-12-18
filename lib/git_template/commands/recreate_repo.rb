@@ -18,22 +18,26 @@ module GitTemplate
     module RecreateRepo
       def self.included(base)
         base.class_eval do
-          desc "recreate-repo [REMOTE_URL]", "Recreate repo creates a submodule with a git clone of the repo, creates a templated folder, and recreates the repo using the .git-template folder. It then does a comparison of the generated content with the original"
+          desc "recreate-repo", "Recreate repo creates a submodule with a git clone of the repo, creates a templated folder, and recreates the repo using the .git-template folder. It then does a comparison of the generated content with the original"
           add_common_options
           option :clean_before, type: :boolean, default: true, desc: "Clean templated folder before recreation"
           option :detailed_comparison, type: :boolean, default: true, desc: "Generate detailed comparison report"
+          option :url, type: :string, desc: "Repository URL to recreate", required: true
           
-          define_method :recreate_repo do |remote_url = nil|
+          define_method :recreate_repo do
             execute_with_error_handling("recreate_repo", options) do
-              log_command_execution("recreate_repo", [remote_url], options)
+              log_command_execution("recreate_repo", [], options)
               setup_environment(options)
               
-              # Validate remote URL is provided
+              # Get remote URL from options
+              remote_url = options[:url]
+              
+              # Thor handles validation with required: true, but add safety check
               unless remote_url
                 result = Models::Result::IterateCommandResult.new(
                   success: false,
                   operation: "recreate_repo",
-                  error_message: "Remote URL is required for recreate-repo command"
+                  error_message: "--url parameter is required for recreate-repo command"
                 )
                 puts result.format_output(options[:format], options)
                 return result

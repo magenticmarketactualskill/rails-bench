@@ -14,7 +14,7 @@ module GitTemplate
     module Push
       def self.included(base)
         base.class_eval do
-          desc "push [PATH]", "Push git repository with initialization and verification"
+          desc "push", "Push git repository with initialization and verification"
           add_common_options
           option :initialize_if_needed, type: :boolean, desc: "Initialize repository if not already a git repo"
           option :commit_changes, type: :boolean, desc: "Commit changes before pushing"
@@ -22,9 +22,11 @@ module GitTemplate
           option :remote_name, type: :string, default: "origin", desc: "Remote name"
           option :branch, type: :string, desc: "Branch to push"
           option :set_upstream, type: :boolean, desc: "Set upstream tracking"
+          option :path, type: :string, default: ".", desc: "Repository path (defaults to current directory)"
           
-          define_method :push do |path = "."|
+          define_method :push do
             execute_with_error_handling("push", options) do
+              path = options[:path] || "."
               log_command_execution("push", [path], options)
               
               git_operations = Services::GitOperations.new

@@ -17,11 +17,13 @@ module GitTemplate
       def self.included(base)
         base.class_eval do
           
-          desc "status [PATH]", "Check the status of application folders for template development"
+          desc "status", "Check the status of application folders for template development"
           add_common_options
+          option :path, type: :string, default: ".", desc: "Path to analyze (defaults to current directory)"
           
-          define_method :status do |folder_path = "."|
+          define_method :status do
             execute_with_error_handling("status", options) do
+              folder_path = options[:path] || "."
               log_command_execution("status", [folder_path], options)
               setup_environment(options)
               

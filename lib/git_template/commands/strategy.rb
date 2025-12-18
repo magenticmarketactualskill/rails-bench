@@ -13,12 +13,14 @@ module GitTemplate
       def self.included(base)
         base.class_eval do
           
-          desc "strategy [PATH]", "Analyze iteration strategy for template development"
+          desc "strategy", "Analyze iteration strategy for template development"
           add_common_options
           option :validate, type: :boolean, default: true, desc: "Include validation checks"
+          option :path, type: :string, default: ".", desc: "Folder path to analyze (defaults to current directory)"
           
-          define_method :strategy do |folder_path = "."|
+          define_method :strategy do
             execute_with_error_handling("strategy", options) do
+              folder_path = options[:path] || "."
               log_command_execution("strategy", [folder_path], options)
               setup_environment(options)
               
