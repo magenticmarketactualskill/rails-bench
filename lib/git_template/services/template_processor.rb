@@ -161,6 +161,12 @@ module GitTemplate
           
           templated_path = calculate_templated_path(folder_path)
           
+          # Check if templated folder already exists
+          if File.exist?(templated_path) && !options[:force]
+            raise TemplateProcessingError.new('create_templated_folder', 
+              "Templated folder already exists: #{templated_path}. Use --force to overwrite.")
+          end
+          
           # Create the templated folder structure
           FileUtils.mkdir_p(templated_path)
           
@@ -170,7 +176,7 @@ module GitTemplate
           
           # Create basic template.rb file
           template_file = File.join(git_template_dir, 'template.rb')
-          template_content = generate_default_template_content(folder_path)
+          template_content = options[:template_content] || generate_default_template_content(folder_path)
           File.write(template_file, template_content)
           
           Models::Result::IterateCommandResult.new(

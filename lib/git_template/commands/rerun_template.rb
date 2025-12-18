@@ -1,7 +1,7 @@
-# CreateTemplatedFolder Concern
+# RerunTemplateCommand Concern
 #
-# This command creates a templated folder structure with basic template configuration
-# for a given source application folder.
+# This command reruns template processing on an existing templated folder,
+# updating the template configuration based on the current folder state.
 
 require_relative 'base'
 require_relative '../services/template_processor'
@@ -11,41 +11,41 @@ require_relative '../status_command_errors'
 
 module GitTemplate
   module Command
-    module CreateTemplatedFolder
+    module RerunTemplate
       def self.included(base)
         base.class_eval do
-          desc "create-templated-folder [PATH]", "Create templated folder structure with template configuration"
+          desc "rerun-template [PATH]", "Rerun template processing and update template configuration"
           add_common_options
-          option :template_content, type: :string, desc: "Custom template content"
+          option :update_content, type: :boolean, default: true, desc: "Update template content based on current state"
           
-          define_method :create_templated_folder do |path = "."|
-            execute_with_error_handling("create_templated_folder", options) do
-              log_command_execution("create_templated_folder", [path], options)
+          define_method :rerun_template do |path = "."|
+            execute_with_error_handling("rerun_template", options) do
+              log_command_execution("rerun_template", [path], options)
               setup_environment(options)
               
               template_processor = Services::TemplateProcessor.new
               folder_analyzer = Services::FolderAnalyzer.new
               
-              # Validate source folder
+              # Validate templated folder
               validated_path = validate_directory_path(path, must_exist: true)
               
-              # Analyze source folder
+              # Analyze folder to ensure it has template configuration
               analysis = folder_analyzer.analyze_template_development_status(validated_path)
               folder_analysis = analysis[:folder_analysis]
               
-              # Check if source folder is suitable
-              unless folder_analysis[:exists]
+              # Check if folder has template configuration
+              unless folder_analysis[:has_template_configuration]
                 result = Models::Result::IterateCommandResult.new(
                   success: false,
-                  operation: "create_templated_folder",
-                  error_message: "Source folder does not exist: #{validated_path}"
+                  operation: "rerun_template",
+                  error_message: "No template configuration found at #{validated_path}. Use create-templated-folder first."
                 )
                 puts result.format_output(options[:format], options)
                 return result
               end
               
-              # Create templated folder structure
-              result = template_processor.create_templated_folder(validated_path, options)
+              # Update template configuration
+              result = template_processor.update_template_configuration(validated_path, options)
               
               # Output result
               puts result.format_output(options[:format], options)

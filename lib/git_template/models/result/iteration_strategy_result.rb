@@ -153,6 +153,34 @@ module GitTemplate
           @folder_analysis&.path || "Unknown path"
         end
 
+        # Override format_as_summary to provide strategy-specific summary format
+        def format_as_summary(options = {})
+          output = []
+          
+          output << "Strategy Analysis Summary"
+          output << "=" * 40
+          output << "Folder: #{extract_folder_path}"
+          output << "Strategy: #{format_strategy_name(@strategy_type)}"
+          output << "Can Proceed: #{status_indicator(@can_proceed)}"
+          output << "Prerequisites Met: #{status_indicator(@prerequisites_met)}"
+          
+          if @missing_requirements.any?
+            output << ""
+            output << "Missing Requirements:"
+            @missing_requirements.each { |req| output << "  - #{req}" }
+          end
+          
+          if @recommendations.any?
+            output << ""
+            output << "Next Steps:"
+            @recommendations.first(3).each_with_index do |rec, index|
+              output << "  #{index + 1}. #{rec}"
+            end
+          end
+          
+          output.join("\n")
+        end
+
         private
 
         def status_indicator(value)

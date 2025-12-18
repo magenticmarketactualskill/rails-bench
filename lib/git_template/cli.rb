@@ -5,9 +5,10 @@ require_relative "commands/diff_result"
 require_relative "commands/clone"
 require_relative "commands/status"
 require_relative "commands/iterate"
-require_relative "commands/update"
 require_relative "commands/push"
 require_relative "commands/create_templated_folder"
+require_relative "commands/rerun_template"
+require_relative "commands/recreate_repo"
 
 module GitTemplate
   class CLI < Thor
@@ -16,9 +17,10 @@ module GitTemplate
     include GitTemplate::Command::Clone
     include GitTemplate::Command::Status
     include GitTemplate::Command::Iterate
-    include GitTemplate::Command::Update
     include GitTemplate::Command::Push
     include GitTemplate::Command::CreateTemplatedFolder
+    include GitTemplate::Command::RerunTemplate
+    include GitTemplate::Command::RecreateRepo
     
     def initialize(*args)
       super

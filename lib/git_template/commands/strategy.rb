@@ -22,69 +22,25 @@ module GitTemplate
               log_command_execution("strategy", [folder_path], options)
               setup_environment(options)
               
+              folder_analyzer = Services::FolderAnalyzer.new
+              iteration_strategy_service = Services::IterationStrategy.new
+              
               # Validate and analyze folder
               validated_path = validate_directory_path(folder_path, must_exist: false)
               
-              # Analyze iteration strategy
-              result = analyze_iteration_strategy(validated_path, options)
+              # Analyze folder for iteration
+              analysis = iteration_strategy_service.analyze_folder_for_iteration(validated_path, folder_analyzer)
               
-              # Output based on format
-              formatted_result = result.format_output(options[:format], options)
+              # Determine iteration strategy
+              result = iteration_strategy_service.determine_iteration_strategy(analysis, options)
               
-              case options[:format]
-              when "json"
-                puts JSON.pretty_generate(formatted_result)
-              when "summary"
-                puts format_strategy_summary(result)
-              else
-                puts formatted_result[:data][:report]
-              end
-              
-              formatted_result
+              # All results inherit from Models::Result::Base and handle their own formatting
+              puts result.format_output(options[:format], options)
+              result
             end
           end
           
-          private
-          
-          define_method :analyze_iteration_strategy do |folder_path, options|
-            folder_analyzer = Services::FolderAnalyzer.new
-            iteration_strategy_service = Services::IterationStrategy.new
-            
-            # Analyze folder for iteration
-            analysis = iteration_strategy_service.analyze_folder_for_iteration(folder_path, folder_analyzer)
-            
-            # Determine iteration strategy
-            strategy_result = iteration_strategy_service.determine_iteration_strategy(analysis, options)
-            
-            strategy_result
-          end
-          
-          define_method :format_strategy_summary do |strategy_result|
-            output = []
-            
-            output << "Strategy Analysis Summary"
-            output << "=" * 40
-            output << "Folder: #{strategy_result.extract_folder_path}"
-            output << "Strategy: #{strategy_result.strategy_type.to_s.split('_').map(&:capitalize).join(' ')}"
-            output << "Can Proceed: #{strategy_result.can_proceed ? '✓' : '✗'}"
-            output << "Prerequisites Met: #{strategy_result.prerequisites_met ? '✓' : '✗'}"
-            
-            if strategy_result.missing_requirements.any?
-              output << ""
-              output << "Missing Requirements:"
-              strategy_result.missing_requirements.each { |req| output << "  - #{req}" }
-            end
-            
-            if strategy_result.recommendations.any?
-              output << ""
-              output << "Next Steps:"
-              strategy_result.recommendations.first(3).each_with_index do |rec, index|
-                output << "  #{index + 1}. #{rec}"
-              end
-            end
-            
-            output.join("\n")
-          end
+
         end
       end
     end
