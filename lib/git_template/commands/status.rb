@@ -14,12 +14,12 @@ module GitTemplate
       def self.included(base)
         base.class_eval do
           
-          desc "status FOLDER", "Check the status of application folders for template development"
+          desc "status [PATH]", "Check the status of application folders for template development"
           option :format, type: :string, default: "detailed", desc: "Output format: detailed, summary, json"
           option :verbose, type: :boolean, default: false, desc: "Show verbose output"
           option :debug, type: :boolean, default: false, desc: "Show debug information"
           
-          define_method :status do |folder_path|
+          define_method :status do |folder_path = "."|
             execute_with_error_handling("status", options) do
               log_command_execution("status", [folder_path], options)
               

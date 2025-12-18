@@ -24,7 +24,7 @@ module GitTemplate
           
           measure_execution_time do
             # Validate and resolve folder paths
-            source_folder, templated_folder = resolve_folder_paths(folder_path, options)
+            source_folder, templated_folder = resolve_folder_paths(path, options)
             
             # Perform the diff operation
             diff_service = Services::FolderDiff.new(source_folder, templated_folder)
@@ -34,7 +34,7 @@ module GitTemplate
             output_path = handle_output_options(diff_results, options)
             
             # Create success response
-            create_success_response("diff_result", {
+            result = create_success_response("diff_result", {
               source_folder: source_folder,
               templated_folder: templated_folder,
               output_file: output_path,
@@ -42,6 +42,18 @@ module GitTemplate
               total_files: diff_results[:file_diffs].length,
               differences_found: diff_results[:summary][:total_differences] > 0
             })
+            
+            # Output results based on format
+            case options[:format]
+            when "json"
+              puts JSON.pretty_generate(result)
+            when "summary"
+              puts format_diff_summary(result)
+            else
+              puts format_detailed_diff_output(result, diff_results)
+            end
+            
+            result
           end
         end
         end
@@ -151,7 +163,81 @@ module GitTemplate
       
       @logger.info("Diff results written to: #{output_path}")
       output_path
-    end
+        end
+
+        define_method :format_diff_summary do |result|
+          summary = result[:summary]
+          output = []
+          
+          output << "Diff Summary:"
+          output << "  Source: #{result[:source_folder]}"
+          output << "  Templated: #{result[:templated_folder]}"
+          output << "  Total Files: #{result[:total_files]}"
+          output << "  Differences Found: #{result[:differences_found] ? 'Yes' : 'No'}"
+          
+          if summary
+            output << "  Files Added: #{summary[:files_added] || 0}"
+            output << "  Files Modified: #{summary[:files_modified] || 0}"
+            output << "  Files Deleted: #{summary[:files_deleted] || 0}"
+          end
+          
+          output << "  Output File: #{result[:output_file]}" if result[:output_file]
+          
+          output.join("\n")
+        end
+
+        define_method :format_detailed_diff_output do |result, diff_results|
+          output = []
+          
+          output << "=" * 80
+          output << "                        Git Template Diff Results"
+          output << "=" * 80
+          output << ""
+          output << "Source Folder: #{result[:source_folder]}"
+          output << "Templated Folder: #{result[:templated_folder]}"
+          output << "Generated: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+          output << ""
+          
+          summary = result[:summary]
+          if summary
+            output << "SUMMARY"
+            output << "-" * 40
+            output << "  Total Files Compared: #{result[:total_files]}"
+            output << "  Files Added: #{summary[:files_added] || 0}"
+            output << "  Files Modified: #{summary[:files_modified] || 0}"
+            output << "  Files Deleted: #{summary[:files_deleted] || 0}"
+            output << "  Total Differences: #{summary[:total_differences] || 0}"
+            output << ""
+          end
+          
+          if result[:differences_found]
+            output << "DIFFERENCES FOUND"
+            output << "-" * 40
+            
+            if diff_results[:file_diffs] && diff_results[:file_diffs].any?
+              diff_results[:file_diffs].each do |file_diff|
+                next unless file_diff[:has_differences]
+                
+                output << "  File: #{file_diff[:relative_path]}"
+                output << "    Status: #{file_diff[:status]}"
+                if file_diff[:line_differences]
+                  output << "    Line Differences: #{file_diff[:line_differences]}"
+                end
+                output << ""
+              end
+            end
+          else
+            output << "NO DIFFERENCES FOUND"
+            output << "-" * 40
+            output << "  Source and templated folders are identical"
+            output << ""
+          end
+          
+          output << "Detailed diff written to: #{result[:output_file]}" if result[:output_file]
+          output << "=" * 80
+          
+          output.join("\n")
+        end
       end
     end
   end

@@ -143,21 +143,21 @@ module GitTemplate
           # Calculate the templated folder path
           relative_path = get_relative_path_for_templated(folder_path)
           templated_path = "templated/#{relative_path}"
-          recommendations << "Create templated folder: git-template iterate \"#{folder_path}\" --create-templated-folder"
+          recommendations << "Create templated folder: bin/git-template iterate \"#{folder_path}\" --create-templated-folder"
           recommendations << "Or manually: mkdir -p \"#{templated_path}/.git_template\""
           recommendations << "Then create template: touch \"#{templated_path}/.git_template/template.rb\""
         when :template_folder_without_templated_version
           relative_path = get_relative_path_for_templated(folder_path)
           templated_path = "templated/#{relative_path}"
-          recommendations << "Create templated version: git-template iterate \"#{folder_path}\" --create-templated-folder"
+          recommendations << "Create templated version: bin/git-template iterate \"#{folder_path}\" --create-templated-folder"
           recommendations << "Or manually: mkdir -p \"#{templated_path}/.git_template\""
         when :templated_folder_missing_configuration
           templated_folder = analysis.templated_folder_path
           recommendations << "Add template configuration: mkdir -p \"#{templated_folder}/.git_template\""
           recommendations << "Create template file: touch \"#{templated_folder}/.git_template/template.rb\""
         when :ready_for_template_iteration
-          recommendations << "Run template iteration: git-template iterate \"#{folder_path}\""
-          recommendations << "Check differences: git-template diff_result \"#{folder_path}\""
+          recommendations << "Run template iteration: bin/git-template iterate \"#{folder_path}\""
+          recommendations << "Check differences: bin/git-template diff-result \"#{folder_path}\""
         else
           recommendations << "Review folder structure and template configuration"
           recommendations << "Run: git-template status \"#{folder_path}\" --format=json for detailed analysis"
