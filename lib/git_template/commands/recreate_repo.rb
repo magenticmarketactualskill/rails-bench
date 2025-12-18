@@ -187,29 +187,9 @@ module GitTemplate
           
 
           
-          define_method :rerun_template do |path|
-            # Stub implementation - call the actual rerun-template command
-            # For now, just return success
-            Models::Result::IterateCommandResult.new(
-              success: true,
-              operation: "rerun_template",
-              data: { path: path }
-            )
-          end
+
           
-          define_method :compare do |source_path, target_path|
-            # Stub implementation - call the actual compare command
-            # For now, just return success
-            Models::Result::IterateCommandResult.new(
-              success: true,
-              operation: "compare",
-              data: { 
-                source_path: source_path,
-                target_path: target_path,
-                message: "Comparison completed successfully"
-              }
-            )
-          end
+
         end
       end
     end

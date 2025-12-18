@@ -25,7 +25,7 @@ module GitTemplate
     include GitTemplate::Command::RerunTemplate
     include GitTemplate::Command::RecreateRepo
     include GitTemplate::Command::RemoveRepo
-    include GitTemplate::Command::CreateTemplatedFolderPublic
+    include GitTemplate::Command::MethodVisibilityFix
     include GitTemplate::Command::RegenerateTemplate
     
     def initialize(*args)
