@@ -143,13 +143,13 @@ module GitTemplate
           # Calculate the templated folder path
           relative_path = get_relative_path_for_templated(folder_path)
           templated_path = "templated/#{relative_path}"
-          recommendations << "Create templated folder: bin/git-template iterate \"#{folder_path}\" --create-templated-folder"
+          recommendations << "Create templated folder: bin/git-template create-templated-folder \"#{folder_path}\""
           recommendations << "Or manually: mkdir -p \"#{templated_path}/.git_template\""
           recommendations << "Then create template: touch \"#{templated_path}/.git_template/template.rb\""
         when :template_folder_without_templated_version
           relative_path = get_relative_path_for_templated(folder_path)
           templated_path = "templated/#{relative_path}"
-          recommendations << "Create templated version: bin/git-template iterate \"#{folder_path}\" --create-templated-folder"
+          recommendations << "Create templated version: bin/git-template create-templated-folder \"#{folder_path}\""
           recommendations << "Or manually: mkdir -p \"#{templated_path}/.git_template\""
         when :templated_folder_missing_configuration
           templated_folder = analysis.templated_folder_path

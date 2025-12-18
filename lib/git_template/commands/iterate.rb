@@ -15,7 +15,6 @@ module GitTemplate
       def self.included(base)
         base.class_eval do
           desc "iterate [PATH]", "Handle template iteration with configuration preservation"
-          option :create_templated_folder, type: :boolean, desc: "Create templated folder if it doesn't exist"
           option :detailed_comparison, type: :boolean, desc: "Generate detailed comparison report"
           option :format, type: :string, default: "detailed", desc: "Output format (detailed, summary, json)"
           

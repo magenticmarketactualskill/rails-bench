@@ -1,0 +1,186 @@
+# CreateTemplatedFolderCommand Concern
+#
+# This command creates a templated folder structure with basic template configuration
+# for a given source application folder.
+
+require_relative 'base'
+require_relative '../services/folder_analyzer'
+require_relative '../status_command_errors'
+
+module GitTemplate
+  module Command
+    module CreateTemplatedFolder
+      def self.included(base)
+        base.class_eval do
+          desc "create-templated-folder [PATH]", "Create templated folder structure with template configuration"
+          option :template_content, type: :string, desc: "Custom template content"
+          option :force, type: :boolean, desc: "Overwrite existing templated folder"
+          option :format, type: :string, default: "detailed", desc: "Output format (detailed, summary, json)"
+          
+          define_method :create_templated_folder do |path = "."|
+            execute_with_error_handling("create_templated_folder", options) do
+              log_command_execution("create_templated_folder", [path], options)
+              
+              measure_execution_time do
+                folder_analyzer = Services::FolderAnalyzer.new
+                
+                # Validate source folder
+                validated_path = validate_directory_path(path, must_exist: true)
+                
+                # Analyze source folder
+                analysis = folder_analyzer.analyze_template_development_status(validated_path)
+                folder_analysis = analysis[:folder_analysis]
+                
+                # Check if source folder is suitable
+                unless folder_analysis[:exists]
+                  raise StatusCommandError.new("Source folder does not exist: #{validated_path}")
+                end
+                
+                # Calculate templated folder path
+                templated_path = calculate_templated_path(validated_path)
+                
+                # Check if templated folder already exists
+                if File.exist?(templated_path) && !options[:force]
+                  raise StatusCommandError.new("Templated folder already exists: #{templated_path}. Use --force to overwrite.")
+                end
+                
+                # Create templated folder structure
+                create_folder_structure(validated_path, templated_path, options)
+                
+                # Generate response
+                result = create_success_response("create_templated_folder", {
+                  source_folder: validated_path,
+                  templated_folder: templated_path,
+                  template_file: File.join(templated_path, '.git_template', 'template.rb'),
+                  created_structure: true
+                })
+                
+                # Output results based on format
+                case options[:format]
+                when "json"
+                  puts JSON.pretty_generate(result)
+                when "summary"
+                  puts format_create_summary(result)
+                else
+                  puts format_detailed_create_output(result)
+                end
+                
+                result
+              end
+            end
+          end
+
+        private
+
+        define_method :calculate_templated_path do |source_path|
+          current_dir = Dir.pwd
+          expanded_path = File.expand_path(source_path)
+          
+          # If expanded_path is absolute and starts with current_dir, make it relative
+          if expanded_path.start_with?(current_dir)
+            relative_path = expanded_path[(current_dir.length + 1)..-1] # +1 to skip the '/'
+          else
+            # If it's already relative or doesn't start with current_dir, use basename
+            relative_path = source_path.start_with?('/') ? File.basename(source_path) : source_path
+          end
+          
+          File.join('templated', relative_path)
+        end
+
+        define_method :create_folder_structure do |source_path, templated_path, options|
+          # Create templated folder
+          ensure_directory_exists(templated_path)
+          
+          # Create .git_template directory
+          git_template_dir = File.join(templated_path, '.git_template')
+          ensure_directory_exists(git_template_dir)
+          
+          # Create template.rb file
+          template_file = File.join(git_template_dir, 'template.rb')
+          template_content = options[:template_content] || generate_default_template_content(source_path)
+          
+          safe_file_operation do
+            File.write(template_file, template_content)
+          end
+          
+          @logger.info("Created templated folder: #{templated_path}")
+          @logger.info("Created template configuration: #{git_template_dir}")
+          @logger.info("Created template file: #{template_file}")
+        end
+
+        define_method :generate_default_template_content do |source_path|
+          folder_name = File.basename(source_path)
+          
+          <<~RUBY
+            # Template for #{folder_name}
+            # Generated by git-template create-templated-folder command
+            # Created: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}
+            
+            say "Applying #{folder_name} template..."
+            
+            # Add your template logic here
+            # Examples:
+            # gem 'some_gem'
+            # generate 'controller', 'welcome'
+            # route "root 'welcome#index'"
+            # 
+            # File operations:
+            # copy_file 'config/database.yml.example', 'config/database.yml'
+            # template 'app/models/user.rb.tt', 'app/models/user.rb'
+            # 
+            # Directory operations:
+            # empty_directory 'app/assets/stylesheets'
+            # 
+            # Git operations:
+            # git :init
+            # git add: '.'
+            # git commit: '-m "Initial commit"'
+            
+            say "#{folder_name} template application complete!"
+          RUBY
+        end
+
+        define_method :format_create_summary do |result|
+          output = []
+          
+          output << "Templated Folder Created:"
+          output << "  Source: #{result[:source_folder]}"
+          output << "  Templated: #{result[:templated_folder]}"
+          output << "  Template File: #{result[:template_file]}"
+          output << "  Status: #{result[:created_structure] ? 'Success' : 'Failed'}"
+          
+          output.join("\n")
+        end
+
+        define_method :format_detailed_create_output do |result|
+          output = []
+          
+          output << "=" * 80
+          output << "                    Templated Folder Created Successfully"
+          output << "=" * 80
+          output << ""
+          output << "Source Folder: #{result[:source_folder]}"
+          output << "Templated Folder: #{result[:templated_folder]}"
+          output << "Template File: #{result[:template_file]}"
+          output << "Generated: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+          output << ""
+          output << "NEXT STEPS"
+          output << "-" * 40
+          output << "1. Edit the template file to add your template logic:"
+          output << "   #{result[:template_file]}"
+          output << ""
+          output << "2. Test the template by running iteration:"
+          output << "   bin/git-template iterate \"#{result[:source_folder]}\""
+          output << ""
+          output << "3. Check differences between source and templated folders:"
+          output << "   bin/git-template diff-result \"#{result[:source_folder]}\""
+          output << ""
+          output << "=" * 80
+          
+          output.join("\n")
+        end
+        end
+      end
+    end
+  end
+end

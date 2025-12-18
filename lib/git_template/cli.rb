@@ -7,6 +7,7 @@ require_relative "commands/status"
 require_relative "commands/iterate"
 require_relative "commands/update"
 require_relative "commands/push"
+require_relative "commands/create_templated_folder"
 
 module GitTemplate
   class CLI < Thor
@@ -17,6 +18,7 @@ module GitTemplate
     include GitTemplate::Command::Iterate
     include GitTemplate::Command::Update
     include GitTemplate::Command::Push
+    include GitTemplate::Command::CreateTemplatedFolder
     
     def initialize(*args)
       super
