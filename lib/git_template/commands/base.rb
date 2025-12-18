@@ -1,20 +1,14 @@
-# BaseCommand Class
+# BaseCommand Module
 #
-# This base class provides common functionality for all command classes,
+# This base module provides common functionality for all command modules,
 # including consistent error handling, logging, and command execution flow.
 
 require_relative '../status_command_errors'
 
 module GitTemplate
-  module Commands
-    class BaseCommand
+  module Command
+    module Base
       include StatusCommandErrors
-
-      def initialize
-        @logger = setup_logger
-      end
-
-      protected
 
       def setup_logger
         # Simple logger setup - could be enhanced with proper logging library

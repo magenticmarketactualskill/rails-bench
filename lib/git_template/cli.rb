@@ -1,15 +1,21 @@
 require "thor"
 require "fileutils"
-#require_relative "commands/status_command"
-#require_relative "commands/clone_command"
-#require_relative "commands/iterate_command"
-#require_relative "commands/update_command"
-#require_relative "commands/push_command"
-#require_relative "commands/push_command"
-require_relative "command_concerns/diff_result_command_concern"
+require_relative "commands/diff_result"
+require_relative "commands/clone"
+require_relative "commands/status"
+require_relative "commands/iterate"
+require_relative "commands/update"
+require_relative "commands/push"
+require_relative "commands/status_command"
 
 module GitTemplate
   class CLI < Thor
-    include DiffResultCommand
+    include GitTemplate::Command::DiffResult
+    include GitTemplate::Command::Clone
+    include GitTemplate::Command::Status
+    include GitTemplate::Command::Iterate
+    include GitTemplate::Command::Update
+    include GitTemplate::Command::Push
+    include GitTemplate::Command::StatusCommand
   end
 end

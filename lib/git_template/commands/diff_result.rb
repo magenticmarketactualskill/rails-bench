@@ -1,16 +1,18 @@
-# DiffResultCommand Class
+# DiffResultCommand Concern
 #
 # This command generates detailed file-by-file, line-by-line diff between
 # source and templated folders using the FolderDiff service.
 
-require_relative 'base_command_concern'
+require_relative 'base'
 require_relative '../services/folder_diff'
 require_relative '../models/templater_folder'
 
 module GitTemplate
-  module DiffResultCommand
-    def self.included(base)
-      base.class_eval do
+  module Command
+    module DiffResult
+      def self.included(base)
+        base.extend(GitTemplate::Command::Base)
+        base.class_eval do
         desc "diff_result [PATH]", "Generate detailed file-by-file diff between source and templated folders"
         option :source_folder, type: :string, desc: "Explicit source folder path"
         option :templated_folder, type: :string, desc: "Explicit templated folder path"
@@ -18,8 +20,8 @@ module GitTemplate
         option :format, type: :string, default: "detailed", desc: "Output format (detailed, summary, json)"
         
         define_method :diff_result do |path = "."|
-        execute_with_error_handling("diff_result", options) do
-          log_command_execution("diff_result", [folder_path], options)
+          execute_with_error_handling("diff_result", options) do
+            log_command_execution("diff_result", [path], options)
           
           measure_execution_time do
             # Validate and resolve folder paths
@@ -154,4 +156,5 @@ module GitTemplate
       end
     end
   end
+end
 end
