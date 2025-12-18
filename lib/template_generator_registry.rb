@@ -4,13 +4,13 @@
 # maps generators to template phases, validates generator structure,
 # and provides generator metadata and execution capabilities.
 
-require_relative 'git_template/template_generators/base_generator'
-require_relative 'git_template/template_generators/gem_bundle_generator'
-require_relative 'git_template/template_generators/view_generator'
-require_relative 'git_template/template_generators/test_generator'
-require_relative 'git_template/template_generators/home_feature_generator'
-require_relative 'git_template/template_generators/post_feature_generator'
-require_relative 'git_template/template_generators/completion_generator'
+require_relative 'git_template/generator/base'
+require_relative 'git_template/generator/gem_bundle'
+require_relative 'git_template/generator/view'
+require_relative 'git_template/generator/test'
+require_relative 'git_template/generator/home_feature'
+require_relative 'git_template/generator/post_feature'
+require_relative 'git_template/generator/completion'
 
 class TemplateGeneratorRegistry
   attr_reader :module_registry, :discovered_modules, :phase_modules
@@ -166,12 +166,12 @@ class TemplateGeneratorRegistry
   private
   
   def register_default_generators
-    register_generator(:gem_bundle, GitTemplate::TemplateGenerators::GemBundleGenerator, '030_PHASE')
-    register_generator(:view, GitTemplate::TemplateGenerators::ViewGenerator, '040_PHASE')
-    register_generator(:test, GitTemplate::TemplateGenerators::TestGenerator, '050_PHASE')
-    register_generator(:home_feature, GitTemplate::TemplateGenerators::HomeFeatureGenerator, '100_PHASE')
-    register_generator(:post_feature, GitTemplate::TemplateGenerators::PostFeatureGenerator, '100_PHASE')
-    register_generator(:completion, GitTemplate::TemplateGenerators::CompletionGenerator, '900_PHASE')
+    register_generator(:gem_bundle, GitTemplate::Generators::GemBundle, '030_PHASE')
+    register_generator(:view, GitTemplate::Generators::View, '040_PHASE')
+    register_generator(:test, GitTemplate::Generators::Test, '050_PHASE')
+    register_generator(:home_feature, GitTemplate::Generators::HomeFeature, '100_PHASE')
+    register_generator(:post_feature, GitTemplate::Generators::PostFeature, '100_PHASE')
+    register_generator(:completion, GitTemplate::Generators::Completion, '900_PHASE')
   end
   
   def infer_phase_from_generator_name(name)
