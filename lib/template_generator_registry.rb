@@ -6,11 +6,7 @@
 
 require_relative 'git_template/generator/base'
 require_relative 'git_template/generator/gem_bundle'
-require_relative 'git_template/generator/view'
-require_relative 'git_template/generator/test'
-require_relative 'git_template/generator/home_feature'
-require_relative 'git_template/generator/post_feature'
-require_relative 'git_template/generator/completion'
+
 
 class TemplateGeneratorRegistry
   attr_reader :module_registry, :discovered_modules, :phase_modules
