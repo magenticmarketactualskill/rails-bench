@@ -7,5 +7,10 @@ log/
 # Template test directory - temporary test files
 template_test/
 
+# Temporary directories
+tmp/
+*/tmp/
+**/tmp/
+
 # macOS system files
 .DS_Store
