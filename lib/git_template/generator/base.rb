@@ -1,4 +1,5 @@
 require_relative 'metadata'
+require 'fileutils'
 
 module GitTemplate
   module Generators
@@ -39,7 +40,25 @@ module GitTemplate
       end
       
       def generate
-        raise NotImplementedError, "Subclasses must implement #generate"
+        write_to_repo
+      end
+      
+      def write_to_repo(include_metadata: true, base_path: Dir.pwd)
+        raise "No repo_path specified" unless @repo_path
+        raise "No golden_text specified" unless @golden_text
+        
+        full_path = File.join(base_path, @repo_path)
+        dir = File.dirname(full_path)
+        FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+        
+        content = if include_metadata
+          "#{metadata_comment}\n\n#{@golden_text}"
+        else
+          @golden_text
+        end
+        
+        File.write(full_path, content)
+        full_path
       end
     end
   end
