@@ -16,6 +16,7 @@ require_relative "commands/regenerate_template"
 require_relative "commands/update_repo_template"
 require_relative "commands/config"
 require_relative "commands/run_template_part"
+require_relative "commands/reverse_engineer"
 
 module GitTemplate
   class CLI < Thor
@@ -33,6 +34,7 @@ module GitTemplate
     include GitTemplate::Command::UpdateRepoTemplate
     include GitTemplate::Command::Config
     include GitTemplate::Command::RunTemplatePart
+    include GitTemplate::Command::ReverseEngineer
     include GitTemplate::Command::MethodVisibilityFix
     
     def initialize(*args)

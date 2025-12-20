@@ -1,4 +1,4 @@
-require_relative 'metadata'
+require_relative '../metadata/base'
 require 'fileutils'
 
 module GitTemplate
