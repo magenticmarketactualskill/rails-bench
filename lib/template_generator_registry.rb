@@ -5,7 +5,7 @@
 # and provides generator metadata and execution capabilities.
 
 require_relative 'git_template/generator/base'
-require_relative 'git_template/generator/gem_bundle'
+
 
 
 class TemplateGeneratorRegistry

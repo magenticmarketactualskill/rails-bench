@@ -1,7 +1,19 @@
 module GitTemplate
   module Generators
     class Base
-      attr_reader :config, :metadata
+      # explicitly set
+      attr_reader :golden_text
+      
+      #inferred from context
+      attr_reader :repo, :repo_path, :metadata
+      
+      def self.golden_text(text = nil)
+        if text
+          @golden_text = text
+        else
+          @golden_text
+        end
+      end
       
       def self.generate(config)
         new(config).generate
@@ -9,6 +21,7 @@ module GitTemplate
       
       def initialize(config)
         @config = config
+        @golden_text = self.class.golden_text
         @metadata = build_metadata
       end
       

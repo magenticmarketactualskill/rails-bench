@@ -12,6 +12,8 @@ module GitTemplate
           public :create_templated_folder if private_method_defined?(:create_templated_folder)
           # Make sure rerun_template is public
           public :rerun_template if private_method_defined?(:rerun_template)
+          # Make sure run_template_part is public
+          public :run_template_part if private_method_defined?(:run_template_part)
         end
       end
     end

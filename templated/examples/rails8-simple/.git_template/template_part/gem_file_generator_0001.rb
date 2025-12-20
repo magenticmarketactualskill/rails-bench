@@ -5,9 +5,6 @@ $LOAD_PATH.unshift(lib_path)
 
 
 class GemFileGenerator0001 < GitTemplate::Generators::Base
-  include GitTemplate::Generators::GemBundle
-  config :metadata, :repo_path, :golden_text
-  repo_path "./Gemfile"
   golden_text <<-TEXT
 source "https://rubygems.org"
 
@@ -85,7 +82,3 @@ end
 
   TEXT
 end
-
-GemFileGenerator0001.generate
-
-puts "Template application completed!"
