@@ -1,6 +1,21 @@
+GIT
+  remote: https://github.com/magenticmarketactualskill/file-set.git
+  revision: b894cc7a8c7aea41c6c7dad58f82da55811d72d1
+  specs:
+    file-set (0.1.0)
+      inifile (~> 3.0)
+
+GIT
+  remote: https://github.com/magenticmarketactualskill/tree-meta.git
+  revision: 7c40f947b3248ad149e9a83d6fd718a85c7b4a2d
+  specs:
+    tree-meta (1.0.0)
+      inifile (~> 3.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
+    inifile (3.0.0)
     thor (1.4.0)
 
 PLATFORMS
@@ -8,10 +23,15 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  file-set!
   thor
+  tree-meta!
 
 CHECKSUMS
+  file-set (0.1.0)
+  inifile (3.0.0) sha256=b103eb3655ec93cc626cf2de00950e91f7e69b8398842968e17e1815cfacbfb0
   thor (1.4.0) sha256=8763e822ccb0f1d7bee88cde131b19a65606657b847cc7b7b4b82e772bcd8a3d
+  tree-meta (1.0.0)
 
 BUNDLED WITH
   4.0.2

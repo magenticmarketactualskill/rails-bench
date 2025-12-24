@@ -1,4 +1,73 @@
-# git-template
+# git-template:
+   - enables collaboration
+   - provides defined work patterns
+   - maintains repository phase in ./.git-template
+   - templates maintain state
+      - https://github.com/magenticmarketactualskill/meta-manager.git
+   - provides bin/repo-template
+ked, or Open state 
+   
+   - guides projects thru evolution as:
+      - Individuals work on one or more facets
+      - Teams of heterogeneous and homogenous Humans Workers
+      - Teams of heterogeneous and homogenous AI Agents
+   - are implementation independent saying WHAT should happen (not how it should happen)
+      - AI context are generated from rules
+      - Filesystem permissions are generated from rules
+      - IDE integration is driven from rules
+      - GIT processing is driven from rules
+Phase: A type of work
+    - Orig - files with permissions matching repo
+    - Open - all git-template files with open permissions
+    - LockDown -  all git-template files with open permissions
+    - OltpDataModeling
+    - OlapDataModeling
+    - WireFrameDesign
+    - DetailDesign
+
+Template: Code attached to a particular file
+    - Has a Class [for all files of a particular type]
+    - Has a Configuration []
+    - Provides support for
+        - Reverse engineering
+            - a files can be captured by a template 
+        - Forward Engineering 
+            - a template can create or modify a file
+
+PhaeState:
+   - Stored in ./.git-template
+   - 'Orig'
+      - file permissions = no change
+      - git status shows no commited changes
+   - 'Lockdown'
+      - file permissions = no change
+      - git status shows no commited changes
+
+WorkFlows:
+
+- Capture
+   - git clone existing repo
+   - add gem git-template
+   - initialze gem git-template
+   - run bin/git-template status to see status = Orig
+
+- PhaseSet
+   - run bin/git-template status to see status = Orig
+   - run bin/git-template phase_set to OLTP_Data_Modeling
+      - bin/git-template will:
+         - insures repository state in ./.git-template == Orig
+         - insures repository is clean [no unpushed changes]
+         - insures repository state in ./.git-template == Orig
+         - saves file permissions as metadata
+      -  
+   - run bin/git-template status to see status = OLTP_Data_Modeling
+
+- Pull
+- Push
+
+--------
+-- Old Content
+--------
 
 A comprehensive Ruby gem for Rails application template development and execution with dual lifecycle management. Provides both template creation/refinement tools and structured template execution with organized phases.
 
