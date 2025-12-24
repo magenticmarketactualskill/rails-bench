@@ -1,35 +1,21 @@
+require_relative '../../class_content_builder'
+
 module GitTemplate
   module Generators
     module Helper
-      def self.included(base)
-        base.class_eval do
-          @helper_name = nil
-          @methods = []
+      include ClassContentBuilder::Generator
+
+      generator_type :module
+      attribute :helper_name
+      attribute :methods, default: []
+
+      def self.build_content(builder)
+        builder.open_definition
+        @_attributes[:methods]&.each do |method|
+          builder.method_def(method)
+          builder.blank_line
         end
-        base.extend(ClassMethods)
-      end
-      
-      module ClassMethods
-        attr_reader :helper_name, :methods
-        
-        def golden_text
-          build_helper_content
-        end
-        
-        private
-        
-        def build_helper_content
-          lines = ["module #{@helper_name}"]
-          
-          @methods&.each do |method|
-            lines << "  def #{method}"
-            lines << "  end"
-            lines << ""
-          end
-          
-          lines << "end"
-          lines.join("\n")
-        end
+        builder.close_definition
       end
     end
   end

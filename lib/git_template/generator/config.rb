@@ -1,25 +1,14 @@
+require_relative '../../class_content_builder'
+
 module GitTemplate
   module Generators
     module Config
-      def self.included(base)
-        base.class_eval do
-          @config_lines = []
-        end
-        base.extend(ClassMethods)
-      end
-      
-      module ClassMethods
-        attr_reader :config_lines
-        
-        def golden_text
-          build_config_content
-        end
-        
-        private
-        
-        def build_config_content
-          @config_lines&.join("\n") || ""
-        end
+      include ClassContentBuilder::Generator
+
+      attribute :config_lines, default: []
+
+      def self.golden_text
+        @_attributes[:config_lines]&.join("\n") || ""
       end
     end
   end

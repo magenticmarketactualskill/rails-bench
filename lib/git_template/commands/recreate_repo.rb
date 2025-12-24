@@ -11,6 +11,7 @@ require_relative '../models/result/iteration_result'
 require_relative '../models/result/iterate_command_result'
 require_relative '../status_command_errors'
 require_relative '../config_manager'
+require_relative '../../gitmodules_parser'
 require 'open3'
 require 'fileutils'
 
@@ -60,8 +61,10 @@ module GitTemplate
           
           define_method :perform_recreate_cloned_repo do |remote_url, repo_path, options|
             begin
+              parser = GitmodulesParser::Parser.new
+
               # Check if submodule already exists (unless force is enabled)
-              if submodule_exists?(remote_url) && !options[:force]
+              if parser.url_exists?(remote_url) && !options[:force]
                 return Models::Result::IterateCommandResult.new(
                   success: false,
                   operation: "recreate_cloned_repo",
@@ -157,14 +160,6 @@ module GitTemplate
                 error_type: e.class.name
               )
             end
-          end
-          
-          define_method :submodule_exists? do |remote_url|
-            # Check if submodule with this URL already exists in .gitmodules
-            return false unless File.exist?('.gitmodules')
-            
-            gitmodules_content = File.read('.gitmodules')
-            gitmodules_content.include?(remote_url)
           end
           
           define_method :clone_repository_as_submodule do |remote_url, submodule_path|

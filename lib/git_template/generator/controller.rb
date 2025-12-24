@@ -1,40 +1,25 @@
+require_relative '../../class_content_builder'
+
 module GitTemplate
   module Generators
     module Controller
-      def self.included(base)
-        base.class_eval do
-          @controller_name = nil
-          @parent_class = "ApplicationController"
-          @actions = []
-          @before_actions = []
+      include ClassContentBuilder::Generator
+
+      generator_type :class
+      default_parent "ApplicationController"
+      attribute :controller_name
+      attribute :actions, default: []
+      attribute :before_actions, default: []
+
+      def self.build_content(builder)
+        builder.open_definition
+        @_attributes[:before_actions]&.each { |ba| builder.before_action(ba) }
+        builder.blank_line if @_attributes[:before_actions]&.any?
+        @_attributes[:actions]&.each do |action|
+          builder.method_def(action)
+          builder.blank_line
         end
-        base.extend(ClassMethods)
-      end
-      
-      module ClassMethods
-        attr_reader :controller_name, :parent_class, :actions, :before_actions
-        
-        def golden_text
-          build_controller_content
-        end
-        
-        private
-        
-        def build_controller_content
-          lines = ["class #{@controller_name} < #{@parent_class}"]
-          
-          @before_actions&.each { |ba| lines << "  #{ba}" }
-          lines << "" if @before_actions&.any?
-          
-          @actions&.each do |action|
-            lines << "  def #{action}"
-            lines << "  end"
-            lines << ""
-          end
-          
-          lines << "end"
-          lines.join("\n")
-        end
+        builder.close_definition
       end
     end
   end
